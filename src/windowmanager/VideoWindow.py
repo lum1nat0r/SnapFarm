@@ -9,7 +9,7 @@ from windowmanager.WindowManager import WindowManager
 class VideoWindow(WindowManager):
     def __init__(self, video_url):
         super().__init__(video_url)
-        self._handle = None
+        self._handle: cv2.VideoCapture
     
     def find_window(self, window_name=None):
         # check if video_url does exist
@@ -45,16 +45,3 @@ class VideoWindow(WindowManager):
         cv2.waitKey(1)
         return frame
     
-    def click_play_button(self):
-        window_location = self.get_window_location()
-        play_button_x = window_location[2] // 2
-        play_button_y = window_location[3] // 6 * 5
-        pyautogui.moveTo(play_button_x, play_button_y)
-        print("Clicking play button on position:", play_button_x, play_button_y)
-    
-    def click_lower_right_button(self):
-        window_location = self.get_window_location()
-        lower_right_button_x = window_location[2] * 0.9
-        lower_right_button_y = window_location[3] * 0.9
-        pyautogui.moveTo(lower_right_button_x, lower_right_button_y)
-        print("Clicking lower right button on position:", lower_right_button_x, lower_right_button_y)

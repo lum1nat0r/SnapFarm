@@ -11,11 +11,12 @@ class ImageProcessor:
         # Convert RGB to BGR (OpenCV uses BGR)
         numpy_image = numpy_image[:, :, ::-1].copy()
         gray_image = cv2.cvtColor(numpy_image, cv2.COLOR_BGR2GRAY)
-        # Apply thresholding
-        ret, threshold_image = cv2.threshold(gray_image, 155, 255, cv2.THRESH_BINARY)
 
         if reduced_mode:
-            return threshold_image
+            return gray_image
+        
+        # Apply thresholding
+        ret, threshold_image = cv2.threshold(gray_image, 155, 255, cv2.THRESH_BINARY)
 
         # Apply dilation and erosion to reduce noise
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
@@ -64,3 +65,8 @@ class ImageProcessor:
         kernel = np.ones(kernel_size, np.uint8)
         dilated_image = cv2.dilate(image, kernel, iterations=iterations)
         return dilated_image
+    
+    @staticmethod
+    def match_template(image, template, method=cv2.TM_SQDIFF_NORMED):
+        result = cv2.matchTemplate(image, template, method)
+        return result

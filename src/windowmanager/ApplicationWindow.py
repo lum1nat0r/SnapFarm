@@ -1,19 +1,22 @@
+from typing import Any
+import mss
 import pyautogui
-from pywinauto import Application
+from pywinauto import Application, WindowSpecification
 import numpy as np
 from windowmanager.WindowManager import WindowManager
 
 class ApplicationWindow(WindowManager):
     """Encapsulates some calls to pywinauto for window management"""
     def __init__(self, process_id):
+        self.sct = mss.mss()
         super().__init__(process_id)
-        self._handle = None
+        self._handle: WindowSpecification
+        self.window_position = None
     
-    def find_window(self, window_name=None):
+    def find_window(self, window_name: str):
         """find a window by its class_name"""
-        self._handle = Application(backend="uia").connect(process=self._process_id)
-        if window_name:
-            self._handle = self._handle.window(title_re=window_name)
+        app = Application(backend="uia").connect(process=self._process_id)
+        self._handle = app.window(title_re=window_name)
 
     def set_foreground(self):
         """put the window in the foreground"""
@@ -25,23 +28,25 @@ class ApplicationWindow(WindowManager):
         return rect
     
     def capture_window_screenshot(self) -> np.ndarray:
-        screenshot = pyautogui.screenshot()
+        #screenshot = pyautogui.screenshot()
         # Crop the screenshot to the window location
+        #numpy_image = np.array(screenshot)
+        if self.window_position is None:
+            self.window_position = self.get_window_location()
+        location = self.window_position # type: ignore
+        monitor = {
+            "top": location.top, # type: ignore
+            "left": location.left, # type: ignore
+            "width": location.right - location.left, # type: ignore
+            "height": location.bottom - location.top # type: ignore
+        }
+        screenshot = self.sct.grab(monitor)
         numpy_image = np.array(screenshot)
-        location = self.get_window_location()
-        cropped_image = numpy_image[location.top:location.bottom, location.left:location.right]
-        return cropped_image
-    
-    def click_play_button(self):
-        window_location = self.get_window_location()
-        play_button_x = window_location.left + ((window_location.right - window_location.left) // 2)
-        play_button_y = window_location.top + ((window_location.bottom - window_location.top) // 6 * 5)
-        pyautogui.moveTo(play_button_x, play_button_y)
-        pyautogui.click()
+        return numpy_image
 
-    def click_lower_right_button(self):
-        window_location = self.get_window_location()
-        lower_right_button_x = window_location.right * 0.9
-        lower_right_button_y = window_location.bottom * 0.9
-        pyautogui.moveTo(lower_right_button_x, lower_right_button_y)
+    def click_inside_window(self, coordinates: tuple):
+        window_pos = self.get_window_location()
+        click_coordinates_x = window_pos.left + coordinates[0] # type: ignore
+        click_coordinates_y = window_pos.top + coordinates[1] # type: ignore
+        pyautogui.moveTo(click_coordinates_x, click_coordinates_y)
         pyautogui.click()

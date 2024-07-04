@@ -19,7 +19,7 @@ class Bot:
         if self.snap_process is None:
             print(f"Process {process_name} not found.")
             print("Please start the game and try again.")
-            return
+            raise Exception(f"Process {process_name} not found.")
         return self.snap_process.pid
 
     def run(self, window_manager: WindowManager, window_title: str):
@@ -40,23 +40,25 @@ class Bot:
         print("Bot started...")
         while True:
             screenshot = self.window_manager.capture_window_screenshot()
-            processed_image = ImageProcessor.process_image(screenshot, reduced_mode=self.current_state != START_SCREEN)
-            decision = self.decision_maker.make_decision(processed_image, self.current_state)
-            new_state = self.__execute_decision(decision)
-            print(f"{self.current_state} -> {new_state} ({decision})")
+            processed_image = ImageProcessor.process_image(screenshot, reduced_mode=True)
+            decision, coordinates = self.decision_maker.make_decision(processed_image, self.current_state) # type: ignore
+            new_state = self.__execute_decision(decision, coordinates) # type: ignore
             self.__update_state(new_state)
-            # time.sleep(1)
+            time.sleep(0.5)
     
-    def __execute_decision(self, decision: str):
+    def __execute_decision(self, decision: str, coordinates_inside_window: tuple):
         if decision == CLICK_PLAY:
-            self.window_manager.click_play_button()
+            self.window_manager.click_inside_window(coordinates_inside_window)
             return PLAYING
         if decision == CLICK_LOWER_RIGHT:
-            self.window_manager.click_lower_right_button()
+            self.window_manager.click_inside_window(coordinates_inside_window)
             if self.current_state == PLAYING:
                 return REWARDS_OVERVIEW
             return START_SCREEN
         return self.current_state
 
     def __update_state(self, new_state):
-        self.current_state = new_state
+        if new_state != self.current_state:
+            self.current_state = new_state
+            print(f"State changed to {self.current_state}")
+            time.sleep(3)

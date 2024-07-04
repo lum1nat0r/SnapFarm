@@ -23,11 +23,7 @@ class WindowManager(ABC):
     @abstractmethod
     def capture_window_screenshot(self) -> np.ndarray:
         pass
-    
-    @abstractmethod
-    def click_play_button(self):
-        pass
 
     @abstractmethod
-    def click_lower_right_button(self):
+    def click_inside_window(self, coordinates: tuple):
         pass
